@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Pengenalan Huruf - Kelas 1 SD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CSS tambahan untuk animasi dan tampilan khusus */
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f0fdf4; /* Warna hijau sangat muda yang ramah anak */
+        }
+
+        h1, .huruf-besar {
+            font-family: 'Fredoka One', cursive;
+        }
+
+        .bounce-in {
+            animation: bounceIn 0.8s;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.1); opacity: 0; }
+            60% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        
+        /* Menggunakan emoji sebagai gambar sementara untuk kesederhanaan */
+        .emoji-icon {
+            font-size: 4rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden border-4 border-green-400 relative">
+        
+        <!-- Header / Navigasi -->
+        <div class="bg-green-400 p-4 text-white flex justify-between items-center rounded-t-2xl">
+            <h1 class="text-2xl md:text-3xl tracking-wide drop-shadow-md">Ayo Belajar Huruf!</h1>
+            <div class="flex gap-4 font-bold text-lg">
+                <button id="music-toggle" class="bg-green-600 px-3 py-1 rounded-full shadow-inner flex items-center gap-2 hover:bg-green-700 transition" onclick="toggleMusic()">
+                    <span>🔇</span>
+                </button>
+                <div class="bg-green-600 px-3 py-1 rounded-full shadow-inner flex items-center gap-2">
+                    <span>⭐</span> <span id="score-display">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layar Mulai -->
+        <div id="start-screen" class="p-8 text-center flex flex-col items-center justify-center min-h-[400px]">
+            <div class="text-6xl mb-6 bounce-in">📚✨</div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4 font-['Fredoka_One']">Tebak Gambar Berdasarkan Huruf Awalan</h2>
+            <p class="text-gray-600 mb-6 text-lg">Pilih gambar yang namanya berawalan dari huruf yang ditampilkan.</p>
+            
+            <!-- Input Nama Pemain -->
+            <input type="text" id="player-name" placeholder="Masukkan namamu di sini..." class="mb-8 px-6 py-3 rounded-full border-4 border-green-300 text-xl text-center focus:outline-none focus:border-orange-500 w-full max-w-xs shadow-inner font-bold text-gray-700">
+
+            <button onclick="startGame()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-full text-2xl shadow-lg transform transition hover:scale-105 active:scale-95">
+                MULAI MAIN
+            </button>
+        </div>
+
+        <!-- Area Permainan -->
+        <div id="game-screen" class="p-6 hidden flex-col items-center min-h-[400px]">
+            
+            <div class="w-full mb-4">
+                 <div class="h-4 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-blue-500 transition-all duration-300" style="width: 0%"></div>
+                 </div>
+                 <p class="text-center text-sm text-gray-500 mt-1">Soal <span id="current-question">1</span> / <span id="total-questions">10</span></p>
+            </div>
+
+            <div class="text-center mb-8">
+                <p class="text-xl text-gray-600 mb-2 font-bold">Cari gambar yang berawalan huruf:</p>
+                <div id="target-letter" class="huruf-besar text-8xl text-blue-600 drop-shadow-md bounce-in">A</div>
+                <p id="target-letter-lower" class="text-3xl text-gray-400 mt-1 font-['Fredoka_One']">a</p>
+            </div>
+
+            <div id="options-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-lg">
+                <!-- Pilihan gambar akan di-generate di sini oleh JavaScript -->
+            </div>
+            
+            <div id="feedback-message" class="mt-6 text-2xl font-bold h-8 transition-opacity duration-300 opacity-0 text-center font-['Fredoka_One']">
+                <!-- Pesan Benar/Salah muncul di sini -->
+            </div>
+        </div>
+
+        <!-- Layar Selesai -->
+        <div id="end-screen" class="p-8 text-center hidden flex-col items-center justify-center min-h-[400px]">
+            <div id="end-mascot" class="text-7xl mb-4 bounce-in">🎉</div>
+            <h2 id="end-title" class="text-4xl font-bold text-gray-800 mb-2 font-['Fredoka_One'] text-center px-4">Hebat Sekali!</h2>
+            <p class="text-xl text-gray-600 mb-6">Kamu telah menyelesaikan permainan.</p>
+            
+            <div class="bg-yellow-100 border-2 border-yellow-400 rounded-2xl p-6 mb-4 w-full max-w-sm shadow-inner">
+                <p class="text-gray-700 text-lg mb-1">Skor Kamu</p>
+                <p class="text-6xl font-black text-orange-500 font-['Fredoka_One']" id="final-score">100</p>
+            </div>
+
+            <!-- Status Penyimpanan Spreadsheet -->
+            <div id="save-status" class="mb-6 h-6 w-full text-center"></div>
+
+            <button onclick="resetGame()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-full text-xl shadow-lg transform transition hover:scale-105 active:scale-95 flex items-center gap-2">
+                <span>🔄</span> MAIN LAGI
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Data kata-kata dan huruf untuk kelas 1 SD
+        // Menggunakan emoji sebagai representasi visual agar sederhana tanpa butuh aset gambar eksternal
+        const gameData = [
+            { letter: 'A', name: 'Apel', icon: '🍎' },
+            { letter: 'A', name: 'Anggur', icon: '🍇' },
+            { letter: 'B', name: 'Buku', icon: '📚' },
+            { letter: 'B', name: 'Baju', icon: '👕' },
+            { letter: 'B', name: 'Bola', icon: '⚽' },
+            { letter: 'C', name: 'Celana', icon: '👖' },
+            { letter: 'C', name: 'Cincin', icon: '💍' },
+            { letter: 'D', name: 'Daun', icon: '🍃' },
+            { letter: 'D', name: 'Dasi', icon: '👔' },
+            { letter: 'E', name: 'Ember', icon: '🪣' },
+            { letter: 'E', name: 'Es krim', icon: '🍦' },
+            { letter: 'F', name: 'Foto', icon: '🖼️' },
+            { letter: 'G', name: 'Gajah', icon: '🐘' },
+            { letter: 'G', name: 'Gigi', icon: '🦷' },
+            { letter: 'G', name: 'Gunting', icon: '✂️' },
+            { letter: 'H', name: 'Hidung', icon: '👃' },
+            { letter: 'H', name: 'Harimau', icon: '🐯' },
+            { letter: 'I', name: 'Ikan', icon: '🐟' },
+            { letter: 'I', name: 'Itik', icon: '🦆' },
+            { letter: 'J', name: 'Jeruk', icon: '🍊' },
+            { letter: 'J', name: 'Jam', icon: '⌚' },
+            { letter: 'K', name: 'Kucing', icon: '🐱' },
+            { letter: 'K', name: 'Kursi', icon: '🪑' },
+            { letter: 'K', name: 'Kuda', icon: '🐎' },
+            { letter: 'L', name: 'Lampu', icon: '💡' },
+            { letter: 'L', name: 'Lebah', icon: '🐝' },
+            { letter: 'M', name: 'Meja', icon: '🪑' }, // Menggunakan emoji kursi karena tidak ada emoji meja yang bagus, bisa diganti
+            { letter: 'M', name: 'Matahari', icon: '☀️' },
+            { letter: 'M', name: 'Mobil', icon: '🚗' },
+            { letter: 'N', name: 'Nanas', icon: '🍍' },
+            { letter: 'N', name: 'Nyamuk', icon: '🦟' },
+            { letter: 'O', name: 'Obat', icon: '💊' },
+            { letter: 'P', name: 'Pisang', icon: '🍌' },
+            { letter: 'P', name: 'Pintu', icon: '🚪' },
+            { letter: 'P', name: 'Payung', icon: '☂️' },
+            { letter: 'R', name: 'Rumah', icon: '🏠' },
+            { letter: 'R', name: 'Roda', icon: '🛞' },
+            { letter: 'S', name: 'Sepatu', icon: '👞' },
+            { letter: 'S', name: 'Sapi', icon: '🐄' },
+            { letter: 'T', name: 'Topi', icon: '🧢' },
+            { letter: 'T', name: 'Telur', icon: '🥚' },
+            { letter: 'T', name: 'Telinga', icon: '👂' },
+            { letter: 'U', name: 'Ular', icon: '🐍' },
+            { letter: 'U', name: 'Uang', icon: '💵' },
+            { letter: 'Z', name: 'Zebra', icon: '🦓' }
+        ];
+
+        let currentScore = 0;
+        let questionIndex = 0;
+        const totalQuestions = 10;
+        let currentTarget = null;
+        let isWaiting = false; // Mencegah klik multiple saat animasi
+        let gameQuestions = []; // Menyimpan soal-soal untuk sesi ini
+        let playerName = ""; // Menyimpan nama pemain
+
+        // === PENGATURAN SPREADSHEET ===
+        // GANTI URL DI BAWAH INI DENGAN URL WEB APP GOOGLE APPS SCRIPT ANDA
+        const SPREADSHEET_WEBAPP_URL = ""; 
+
+        // Referensi elemen DOM
+        const screens = {
+            start: document.getElementById('start-screen'),
+            game: document.getElementById('game-screen'),
+            end: document.getElementById('end-screen')
+        };
+        const scoreDisplay = document.getElementById('score-display');
+        const targetLetterEl = document.getElementById('target-letter');
+        const targetLetterLowerEl = document.getElementById('target-letter-lower');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackMessage = document.getElementById('feedback-message');
+        const currentQuestionEl = document.getElementById('current-question');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const finalScoreEl = document.getElementById('final-score');
+        const endTitleEl = document.getElementById('end-title');
+        const endMascotEl = document.getElementById('end-mascot');
+
+        // Fungsi untuk mengacak array (Fisher-Yates)
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        // Fungsi untuk menyiapkan soal-soal
+        function prepareQuestions() {
+            gameQuestions = [];
+            let availableLetters = [...new Set(gameData.map(item => item.letter))]; // Ambil huruf unik
+            availableLetters = shuffleArray(availableLetters).slice(0, totalQuestions); // Ambil sejumlah soal
+            
+            availableLetters.forEach(letter => {
+                // Ambil 1 item benar untuk huruf ini
+                const correctItems = gameData.filter(item => item.letter === letter);
+                const correctItem = correctItems[Math.floor(Math.random() * correctItems.length)];
+                
+                // Ambil 3 item salah yang huruf awalnya BEDA
+                const wrongItems = gameData.filter(item => item.letter !== letter);
+                const shuffledWrong = shuffleArray([...wrongItems]);
+                const selectedWrong = shuffledWrong.slice(0, 3);
+                
+                // Gabungkan dan acak posisinya
+                let options = [correctItem, ...selectedWrong];
+                options = shuffleArray(options);
+                
+                gameQuestions.push({
+                    targetLetter: letter,
+                    correctItem: correctItem,
+                    options: options
+                });
+            });
+        }
+
+        function showScreen(screenName) {
+            Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+            screens[screenName].classList.remove('hidden');
+            screens[screenName].classList.add('flex'); // Pastikan display flex kembali
+        }
+
+        function startGame() {
+            // Ambil dan validasi nama pemain
+            const nameInput = document.getElementById('player-name').value.trim();
+            if (!nameInput) {
+                alert("Halo! Tolong isi namamu dulu ya sebelum mulai bermain! 😊");
+                document.getElementById('player-name').focus();
+                return;
+            }
+            playerName = nameInput;
+
+            playMusic(); // Mainkan musik saat mulai
+            currentScore = 0;
+            questionIndex = 0;
+            isWaiting = false;
+            updateScoreDisplay();
+            totalQuestionsEl.textContent = totalQuestions;
+            prepareQuestions();
+            showScreen('game');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (questionIndex >= totalQuestions) {
+                endGame();
+                return;
+            }
+
+            isWaiting = false;
+            const currentQ = gameQuestions[questionIndex];
+            currentTarget = currentQ;
+
+            // Update UI
+            currentQuestionEl.textContent = questionIndex + 1;
+            progressBar.style.width = `${((questionIndex) / totalQuestions) * 100}%`;
+            
+            // Animasi huruf
+            targetLetterEl.classList.remove('bounce-in');
+            void targetLetterEl.offsetWidth; // trigger reflow
+            targetLetterEl.textContent = currentQ.targetLetter;
+            targetLetterLowerEl.textContent = currentQ.targetLetter.toLowerCase();
+            targetLetterEl.classList.add('bounce-in');
+
+            // Reset pesan
+            feedbackMessage.style.opacity = 0;
+
+            // Render opsi
+            optionsContainer.innerHTML = '';
+            currentQ.options.forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'bg-gray-100 hover:bg-blue-50 border-4 border-transparent hover:border-blue-300 rounded-2xl p-4 flex flex-col items-center justify-center transition-all transform hover:-translate-y-1 shadow-sm hover:shadow-md cursor-pointer aspect-square';
+                btn.innerHTML = `
+                    <div class="emoji-icon mb-2">${item.icon}</div>
+                    <div class="font-bold text-gray-700 capitalize w-full text-center truncate px-1">${item.name}</div>
+                `;
+                btn.onclick = () => handleAnswer(btn, item);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(buttonElement, selectedItem) {
+            if (isWaiting) return;
+            isWaiting = true; // Kunci interaksi
+
+            const isCorrect = selectedItem.letter === currentTarget.targetLetter;
+
+            // Nonaktifkan semua tombol
+            const allButtons = optionsContainer.querySelectorAll('button');
+            allButtons.forEach(btn => {
+                btn.classList.remove('hover:bg-blue-50', 'hover:border-blue-300', 'cursor-pointer', 'hover:-translate-y-1', 'hover:shadow-md');
+                btn.style.cursor = 'default';
+                btn.onclick = null;
+            });
+
+            if (isCorrect) {
+                // Jawaban Benar
+                currentScore += 10;
+                updateScoreDisplay();
+                
+                buttonElement.classList.add('bg-green-100', 'border-green-500', 'scale-105', 'shadow-lg');
+                buttonElement.classList.replace('border-transparent', 'border-green-500');
+                
+                showFeedback("Benar! Hebat!", "text-green-500");
+                playCorrectSound();
+                
+                // Sorot semua tombol yang salah agar meredup
+                allButtons.forEach(btn => {
+                    if (btn !== buttonElement) btn.style.opacity = '0.5';
+                });
+
+            } else {
+                // Jawaban Salah
+                buttonElement.classList.add('bg-red-100', 'border-red-500', 'shake');
+                buttonElement.classList.replace('border-transparent', 'border-red-500');
+                
+                showFeedback(`Ups! Itu ${selectedItem.name} (${selectedItem.letter}).`, "text-red-500");
+                playWrongSound();
+
+                // Cari dan sorot jawaban yang benar
+                allButtons.forEach((btn, index) => {
+                    if (currentTarget.options[index].letter === currentTarget.targetLetter) {
+                        btn.classList.add('bg-green-100', 'border-green-400');
+                        btn.classList.replace('border-transparent', 'border-green-400');
+                    } else {
+                        if(btn !== buttonElement) btn.style.opacity = '0.5';
+                    }
+                });
+            }
+
+            // Lanjut ke soal berikutnya setelah delay
+            setTimeout(() => {
+                questionIndex++;
+                loadQuestion();
+            }, 2000);
+        }
+
+        function showFeedback(text, colorClass) {
+            feedbackMessage.textContent = text;
+            feedbackMessage.className = `mt-6 text-2xl font-bold h-8 transition-opacity duration-300 opacity-100 text-center font-['Fredoka_One'] ${colorClass}`;
+        }
+
+        function updateScoreDisplay() {
+            scoreDisplay.textContent = currentScore;
+        }
+
+        function endGame() {
+            progressBar.style.width = '100%';
+            setTimeout(() => {
+                showScreen('end');
+                finalScoreEl.textContent = currentScore;
+                
+                let pesanEvaluasi = "";
+                if (currentScore === totalQuestions * 10) {
+                    pesanEvaluasi = "Sempurna,";
+                    endMascotEl.textContent = "🏆";
+                } else if (currentScore >= (totalQuestions * 10) / 2) {
+                    pesanEvaluasi = "Bagus Sekali,";
+                    endMascotEl.textContent = "🌟";
+                } else {
+                    pesanEvaluasi = "Terus Berlatih,";
+                    endMascotEl.textContent = "💪";
+                }
+
+                // Tampilkan nama pemain di akhir
+                endTitleEl.textContent = `${pesanEvaluasi} ${playerName}!`;
+
+                // Panggil fungsi untuk menyimpan data ke spreadsheet
+                saveDataToSpreadsheet(playerName, currentScore);
+
+            }, 500);
+        }
+
+        function saveDataToSpreadsheet(name, score) {
+            const saveStatusEl = document.getElementById('save-status');
+            
+            // Jika URL belum diisi, tampilkan pesan peringatan ringan
+            if (!SPREADSHEET_WEBAPP_URL) {
+                saveStatusEl.innerHTML = "<span class='text-gray-400 text-sm font-medium'>*(Skor belum tersambung ke Spreadsheet)</span>";
+                return;
+            }
+
+            saveStatusEl.innerHTML = "<span class='text-blue-500 text-sm font-bold animate-pulse'>⏳ Sedang menyimpan nilaimu...</span>";
+
+            // Siapkan data untuk dikirim
+            const formData = new FormData();
+            formData.append('nama', name);
+            formData.append('skor', score);
+            formData.append('tanggal', new Date().toLocaleString('id-ID'));
+
+            // Kirim data ke Google Apps Script
+            fetch(SPREADSHEET_WEBAPP_URL, {
+                method: 'POST',
+                body: formData,
+                mode: 'no-cors' // Mencegah error CORS dari browser
+            }).then(() => {
+                saveStatusEl.innerHTML = "<span class='text-green-600 text-sm font-bold'>✅ Nilaimu berhasil disimpan!</span>";
+            }).catch(error => {
+                saveStatusEl.innerHTML = "<span class='text-red-500 text-sm font-bold'>❌ Gagal menyimpan nilai.</span>";
+                console.error('Error menyimpan ke spreadsheet:', error);
+            });
+        }
+
+        function resetGame() {
+            // Kosongkan input nama untuk pemain berikutnya jika diinginkan (opsional)
+            // document.getElementById('player-name').value = ''; 
+            startGame();
+        }
+
+        // --- Sintesis Suara Sederhana Menggunakan Web Audio API (Opsional tapi menyenangkan) ---
+        // Karena kita tidak memuat aset suara eksternal, kita buat beep sederhana
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playBeep(freq, type, duration) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        }
+
+        function playCorrectSound() {
+            playBeep(440, 'sine', 0.1); // Nada A4
+            setTimeout(() => playBeep(554, 'sine', 0.15), 100); // Nada C#5
+            setTimeout(() => playBeep(659, 'sine', 0.3), 250); // Nada E5
+        }
+
+        function playWrongSound() {
+            playBeep(300, 'square', 0.2);
+            setTimeout(() => playBeep(250, 'square', 0.4), 150);
+        }
+        
+        // --- Fitur Musik Latar ---
+        // Menggunakan raw URL dari github untuk memutar audio secara langsung
+        const bgMusic = new Audio("https://raw.githubusercontent.com/kholifatul1291-cloud/musik-gim/8f492e026a649de74980411f2a73bd4f289cc256/Lobi_Petualangan.mp3");
+        bgMusic.loop = true;
+        bgMusic.volume = 0.4; // Atur volume sedang
+        let isMusicPlaying = false;
+
+        function playMusic() {
+            if (!isMusicPlaying) {
+                bgMusic.play().then(() => {
+                    isMusicPlaying = true;
+                    document.getElementById('music-toggle').innerHTML = '<span>🔊</span>';
+                }).catch(e => console.log("Menunggu interaksi user untuk memutar musik."));
+            }
+        }
+
+        function toggleMusic() {
+            if (isMusicPlaying) {
+                bgMusic.pause();
+                isMusicPlaying = false;
+                document.getElementById('music-toggle').innerHTML = '<span>🔇</span>';
+            } else {
+                bgMusic.play();
+                isMusicPlaying = true;
+                document.getElementById('music-toggle').innerHTML = '<span>🔊</span>';
+            }
+        }
+        
+        // Inisialisasi awal saat load
+        window.onload = () => {
+           // Pastikan yang tampil hanya start screen
+           showScreen('start');
+        };
+
+    </script>
+</body>
+</html>
